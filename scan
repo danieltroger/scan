@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 if(strlen($argv[1]) < 1) die("No filename specified.\n");
-if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [<Jpeg/Pdf> <DPI> <contrast> <brightness> <Gray/Color>]\n");
+if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [<Jpeg/Pdf> <DPI> <contrast> <brightness> <Gray/Color> <compression>]\n");
  //<filname ><DPI> <contrast> <brightness>
  if(strlen($argv[2]) > 1)
  {
@@ -46,6 +46,14 @@ else
 {
   define("color","Color");
 }
+if(strlen($argv[7]) > 1)
+{
+  define("compression",$argv[7]);
+}
+else
+{
+  define("compression",100);
+}
 define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19\" xmlns:dd=\"http://www.hp.com/schemas/imaging/con/dictionaries/1.0/\">
 <scan:XResolution>" . DPI ."</scan:XResolution>
 <scan:YResolution>" . DPI ."</scan:YResolution>
@@ -54,7 +62,7 @@ define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/
 <scan:Width>2480</scan:Width>
 <scan:Height>3508</scan:Height>
 <scan:Format>" . ftype . "</scan:Format>
-<scan:CompressionQFactor>60</scan:CompressionQFactor>
+<scan:CompressionQFactor>" . compression . "</scan:CompressionQFactor>
 <scan:ColorSpace>" . color . "</scan:ColorSpace>
 <scan:BitDepth>8</scan:BitDepth>
 <scan:InputSource>Platen</scan:InputSource>
