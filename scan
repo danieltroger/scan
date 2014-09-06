@@ -1,8 +1,74 @@
 #!/usr/bin/env php
 <?php
-define("opts",'<scan:ScanJob xmlns:scan="http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19" xmlns:dd="http://www.hp.com/schemas/imaging/con/dictionaries/1.0/"><scan:XResolution>300</scan:XResolution><scan:YResolution>300</scan:YResolution><scan:XStart>0</scan:XStart><scan:YStart>0</scan:YStart><scan:Width>2480</scan:Width><scan:Height>3508</scan:Height><scan:Format>Jpeg</scan:Format><scan:CompressionQFactor>60</scan:CompressionQFactor><scan:ColorSpace>Color</scan:ColorSpace><scan:BitDepth>8</scan:BitDepth><scan:InputSource>Platen</scan:InputSource><scan:GrayRendering>NTSC</scan:GrayRendering><scan:ToneMap><scan:Gamma>1000</scan:Gamma><scan:Brightness>1200</scan:Brightness><scan:Contrast>1200</scan:Contrast><scan:Highlite>179</scan:Highlite><scan:Shadow>25</scan:Shadow></scan:ToneMap><scan:ContentType>Photo</scan:ContentType></scan:ScanJob>');
-define("ip","http://192.168.178.22");
 if(strlen($argv[1]) < 1) die("No filename specified.\n");
+if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [<Jpeg/Pdf> <DPI> <contrast> <brightness> <Gray/Color>]\n");
+ //<filname ><DPI> <contrast> <brightness>
+ if(strlen($argv[2]) > 1)
+ {
+   define("ftype",$argv[2]);
+   if($argv[2] == "Pdf") define("ctype","Document");
+   if($argv[2] == "Jpeg") define("ctype","Photo");
+ }
+ else
+ {
+   define("ftype","Jpeg");
+   define("ctype","Photo");
+ }
+if(strlen($argv[3]) > 1)
+{
+  define("DPI",$argv[3]);
+}
+else
+{
+  define("DPI",300);
+}
+if(strlen($argv[4]) > 1)
+{
+  define("contrast",$argv[4]);
+}
+else
+{
+  define("contrast",1000);
+}
+if(strlen($argv[5]) > 1)
+{
+  define("brightness",$argv[5]);
+}
+else
+{
+  define("brightness",1000);
+}
+if(strlen($argv[6]) > 1)
+{
+  define("color",$argv[6]);
+}
+else
+{
+  define("color","Color");
+}
+define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19\" xmlns:dd=\"http://www.hp.com/schemas/imaging/con/dictionaries/1.0/\">
+<scan:XResolution>" . DPI ."</scan:XResolution>
+<scan:YResolution>" . DPI ."</scan:YResolution>
+<scan:XStart>0</scan:XStart>
+<scan:YStart>0</scan:YStart>
+<scan:Width>2480</scan:Width>
+<scan:Height>3508</scan:Height>
+<scan:Format>" . ftype . "</scan:Format>
+<scan:CompressionQFactor>60</scan:CompressionQFactor>
+<scan:ColorSpace>" . color . "</scan:ColorSpace>
+<scan:BitDepth>8</scan:BitDepth>
+<scan:InputSource>Platen</scan:InputSource>
+<scan:GrayRendering>NTSC</scan:GrayRendering>
+<scan:ToneMap>
+<scan:Gamma>1000</scan:Gamma>
+<scan:Brightness>" . brightness . "</scan:Brightness>
+<scan:Contrast>" . contrast . "</scan:Contrast>
+<scan:Highlite>179</scan:Highlite>
+<scan:Shadow>25</scan:Shadow>
+</scan:ToneMap>
+<scan:ContentType>" . ctype . "</scan:ContentType>
+</scan:ScanJob>");
+define("ip","http://192.168.178.22");
 scan($argv[1]);
 function scan($fname)
 {
