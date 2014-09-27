@@ -72,8 +72,48 @@ define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/
 <scan:ContentType>Photo</scan:ContentType>
 </scan:ScanJob>");
 define("ip","http://192.168.178.22");
-scan($argv[1]);
-function scan($fname)
+if(pdf)
+{
+  $pdfo = new FPDF();
+  $done = false;
+  $pdfo->AliasNbPages();
+  while(!$done)
+  {
+    $f = ".tmp_file" . rand() . ".jpg";
+    file_put_contents($f,scan());
+    echo "Scan done, adding to pdf...\n";
+    pdf_img($pdfo,$f)
+    echo("Done. Press enter to scan another page, type d or done to finish. ");
+    $a = stdin();
+    if($a == "d" || $a == "done") $done = true;
+  }
+  $pdfo->Output($argv[1],"F");
+}
+/*
+echo "Saved to {$fname}\nEnter a new filename for next scan or just press enter to save as 1.jpg 2.jpg 3.jpg etc, type "done" (without the quotes) to cancel: ";
+ $nn = stdin();
+ if(strlen($nn) < 1)
+ {
+   $i = 1;
+   $nn = "{$i}.jpg";
+   while(file_exists($nn))
+   {
+     $i++;
+     $nn = "{$i}.jpg";
+   }
+ }
+ if($nn == "done")
+ {
+   if(pdf)
+   {
+    $pdf->Output($argv[1],"F");
+   }
+ }
+ else
+ {
+   scan($nn);
+ }*/
+function scan()
 {
  if(busy()) die("Scanner busy\n");
  $resp = post(ip . "/Scan/Jobs",opts,true,true,false);
@@ -88,35 +128,7 @@ function scan($fname)
    }
  }
  echo "Started job, URL: {$joburl}\n";
- if(pdf || !child)
- {
-   $pdf = new FPDF();
-   $pdf->AliasNbPages();
- }
- else{ dlj($joburl,$fname);  }
- echo "Saved to {$fname}\nEnter a new filename for next scan or just press enter to save as 1.jpg 2.jpg 3.jpg etc, type "done" (without the quotes) to cancel: ";
-  $nn = stdin();
-  if(strlen($nn) < 1)
-  {
-    $i = 1;
-    $nn = "{$i}.jpg";
-    while(file_exists($nn))
-    {
-      $i++;
-      $nn = "{$i}.jpg";
-    }
-  }
-  if($nn == "done")
-  {
-    if(pdf)
-    {
-     $pdf->Output($argv[1],"F");
-    }
-  }
-  else
-  {
-    scan($nn);
-  }
+ return dlj($joburl);
 }
 function stdin()
 {
@@ -135,8 +147,8 @@ function dlj($joburl,$fname)
    $status = $jr->ScanJob->PreScanPage->PageState;
    echo "Status: {$status}\n";
  }
-  echo "Ready, saving...\n";
-  file_put_contents($fname,post(ip . $dlurl,NULL,false));
+  echo "Ready, scanning...\n";
+  return post(ip . $dlurl,NULL,false);
 }
 function busy()
 {
@@ -162,7 +174,7 @@ function post($url,$data,$post = true,$head = false,$redir = true)
     curl_close( $ch );
     return $restext;
   }
-  function aimg($pdf,$fn)
+  function pdf_img($pdf,$fn)
 {
 list($width,$height) = getimagesize($fn);
 if($width > $pdf -> h || $height > $pdf -> w)
