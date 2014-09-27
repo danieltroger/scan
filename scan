@@ -7,7 +7,7 @@ if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [
  //<filname ><DPI> <contrast> <brightness>
  if(strlen($argv[2]) > 1)
  {
-   if(strtolower($argv[2]) == "pdf") $pdf = true;
+   if(strtolower($argv[2]) == "pdf") define("pdf",true);
  }
 if(strlen($argv[3]) > 1)
 {
@@ -88,7 +88,35 @@ function scan($fname)
    }
  }
  echo "Started job, URL: {$joburl}\n";
- dlj($joburl,$fname);
+ if(pdf || !child)
+ {
+   $pdf = new FPDF();
+   $pdf->AliasNbPages();
+ }
+ else{ dlj($joburl,$fname);  }
+ echo "Saved to {$fname}\nEnter a new filename for next scan or just press enter to save as 1.jpg 2.jpg 3.jpg etc, type "done" (without the quotes) to cancel: ";
+  $nn = stdin();
+  if(strlen($nn) < 1)
+  {
+    $i = 1;
+    $nn = "{$i}.jpg";
+    while(file_exists($nn))
+    {
+      $i++;
+      $nn = "{$i}.jpg";
+    }
+  }
+  if($nn == "done")
+  {
+    if(pdf)
+    {
+     $pdf->Output($argv[1],"F");
+    }
+  }
+  else
+  {
+    scan($nn);
+  }
 }
 function stdin()
 {
@@ -109,19 +137,6 @@ function dlj($joburl,$fname)
  }
   echo "Ready, saving...\n";
   file_put_contents($fname,post(ip . $dlurl,NULL,false));
-  echo "Saved to {$fname}\nEnter a new filename for next scan or just press enter to save as 1.jpg 2.jpg 3.jpg etc, ctrl-c to cancel: ";
-  $nn = stdin();
-  if(strlen($nn) < 1)
-  {
-    $i = 1;
-    $nn = "{$i}.jpg";
-    while(file_exists($nn))
-    {
-      $i++;
-      $nn = "{$i}.jpg";
-    }
-  }
-  scan($nn);
 }
 function busy()
 {
@@ -147,3 +162,17 @@ function post($url,$data,$post = true,$head = false,$redir = true)
     curl_close( $ch );
     return $restext;
   }
+  function aimg($pdf,$fn)
+{
+list($width,$height) = getimagesize($fn);
+if($width > $pdf -> h || $height > $pdf -> w)
+{
+if($width > $height) $pdf->AddPage('L'); $scale = $width/$pdf -> w;
+if($height > $width) $pdf->AddPage(); $scale = $height/$pdf -> h;
+$pdf->Image($fn,0,0,$width/$scale,$height/$scale);
+}
+else
+{
+$pdf->Image($fn,0,0);
+}
+}
