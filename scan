@@ -8,13 +8,13 @@ if(!file_exists(fpdf))
 require(fpdf);
 if(strlen($argv[1]) < 1) die("No filename specified.\n");
 if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [<Jpeg/Pdf> <DPI> <contrast> <brightness> <Gray/Color> <compression>]\n");
- //<filname ><DPI> <contrast> <brightness>
- if(strlen($argv[2]) > 1)
- {
-   if(strtolower($argv[2]) == "pdf") define("pdf",true);
-   else define("pdf",false);
- }
- else { define("pdf",false); }
+//<filname ><DPI> <contrast> <brightness>
+if(strlen($argv[2]) > 1)
+{
+  if(strtolower($argv[2]) == "pdf") define("pdf",true);
+  else define("pdf",false);
+}
+else { define("pdf",false); }
 if(strlen($argv[3]) > 1)
 {
   define("DPI",$argv[3]);
@@ -103,20 +103,20 @@ else
 }
 function scan()
 {
- if(busy()) die("Scanner busy\n");
- $resp = post(ip . "/Scan/Jobs",opts,true,true,false);
- $lines = explode("\n",$resp);
- foreach($lines as $line)
- {
-   $splt = explode(":",$line);
-   if($splt[0] == "Location")
-   {
-     unset($splt[0]);
-     $joburl = substr(implode(":",$splt),1);
-   }
- }
- echo "Started job, URL: {$joburl}\n";
- return dlj($joburl);
+  if(busy()) die("Scanner busy\n");
+  $resp = post(ip . "/Scan/Jobs",opts,true,true,false);
+  $lines = explode("\n",$resp);
+  foreach($lines as $line)
+  {
+    $splt = explode(":",$line);
+    if($splt[0] == "Location")
+    {
+      unset($splt[0]);
+      $joburl = substr(implode(":",$splt),1);
+    }
+  }
+  echo "Started job, URL: {$joburl}\n";
+  return dlj($joburl);
 }
 function stdin()
 {
@@ -130,11 +130,11 @@ function dlj($joburl)
   $status = "";
   while($status != "ReadyToUpload")
   {
-   $jr = simplexml_load_string(post($joburl,NULL,false));
-   $dlurl = $jr->ScanJob->PreScanPage->BinaryURL;
-   $status = $jr->ScanJob->PreScanPage->PageState;
-   echo "Status: {$status}\n";
- }
+    $jr = simplexml_load_string(post($joburl,NULL,false));
+    $dlurl = $jr->ScanJob->PreScanPage->BinaryURL;
+    $status = $jr->ScanJob->PreScanPage->PageState;
+    echo "Status: {$status}\n";
+  }
   echo "Ready, scanning...\n";
   return post(ip . $dlurl,NULL,false);
 }
@@ -145,34 +145,34 @@ function busy()
   return true;
 }
 function post($url,$data,$post = true,$head = false,$redir = true)
+{
+  $ch = curl_init( $url );
+  curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $redir );
+  curl_setopt( $ch, CURLOPT_HEADER, $head );
+  curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+  if($post)
   {
-    $ch = curl_init( $url );
-    curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $redir );
-    curl_setopt( $ch, CURLOPT_HEADER, $head );
-    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-    if($post)
-    {
-      curl_setopt($ch,CURLOPT_POST, true);
-      curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
-    }
-    curl_setopt( $ch, CURLOPT_BINARYTRANSFER, true);
-    curl_setopt($ch,CURLOPT_TIMEOUT,60*60*24);
-    curl_setopt( $ch, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0");
-    $restext = curl_exec( $ch );
-    curl_close( $ch );
-    return $restext;
+    curl_setopt($ch,CURLOPT_POST, true);
+    curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
   }
-  function pdf_img($pdf,$fn)
-{
-list($width,$height) = getimagesize($fn);
-if($width > $pdf -> h || $height > $pdf -> w)
-{
-if($width > $height) $pdf->AddPage('L'); $scale = $width/$pdf -> w;
-if($height > $width) $pdf->AddPage(); $scale = $height/$pdf -> h;
-$pdf->Image($fn,0,0,$width/$scale,$height/$scale);
+  curl_setopt( $ch, CURLOPT_BINARYTRANSFER, true);
+  curl_setopt($ch,CURLOPT_TIMEOUT,60*60*24);
+  curl_setopt( $ch, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0");
+  $restext = curl_exec( $ch );
+  curl_close( $ch );
+  return $restext;
 }
-else
+function pdf_img($pdf,$fn)
 {
-$pdf->Image($fn,0,0);
-}
+  list($width,$height) = getimagesize($fn);
+  if($width > $pdf -> h || $height > $pdf -> w)
+  {
+    if($width > $height) $pdf->AddPage('L'); $scale = $width/$pdf -> w;
+    if($height > $width) $pdf->AddPage(); $scale = $height/$pdf -> h;
+    $pdf->Image($fn,0,0,$width/$scale,$height/$scale);
+  }
+  else
+  {
+    $pdf->Image($fn,0,0);
+  }
 }
