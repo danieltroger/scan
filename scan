@@ -3,7 +3,7 @@
 define("fpdf",getenv("HOME") . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
 {
-  file_put_contents(fpdf,"<?php " . post("https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/89f95fbfb0a7721ad257d006073d7a8b01c10ff5/gistfile1.txt",NULL,false));
+  file_put_contents(fpdf,"<?php " . post("http://files.sn0wbreak.com/mirror.php?url=https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/89f95fbfb0a7721ad257d006073d7a8b01c10ff5/gistfile1.txt",NULL,false));
 }
 require(fpdf);
 if(strlen($argv[1]) < 1) die("No filename specified.\n");
