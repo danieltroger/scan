@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php -d memory_limit=10G
 <?php
 define("fpdf",getenv("HOME") . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
@@ -87,7 +87,10 @@ if(pdf)
   {
     $f = ".tmpfile" . rand() . ".jpg";
     file_put_contents($f,scan());
-    echo "Scan done, adding to pdf...\n";
+    echo "Scan done, rotating and adding to pdf...\n";
+    shell_exec("jpegtran -rot 270 {$f} > {$f}_");
+    unlink($f);
+    rename("{$f}_",$f);
     pdf_img($pdfo,$f);
     unlink($f);
     echo "Done. Press enter to scan another page, type d or done to finish. ";
@@ -103,7 +106,12 @@ else
 }
 function scan()
 {
-  if(busy()) die("Scanner busy\n");
+  while(busy())
+  {
+    echo "Waiting for scanner...\r";
+    sleep(1);
+  }
+  echo "\n";
   $resp = post(ip . "/Scan/Jobs",opts,true,true,false);
   $lines = explode("\n",$resp);
   foreach($lines as $line)
@@ -133,9 +141,9 @@ function dlj($joburl)
     $jr = simplexml_load_string(post($joburl,NULL,false));
     $dlurl = $jr->ScanJob->PreScanPage->BinaryURL;
     $status = $jr->ScanJob->PreScanPage->PageState;
-    echo "Status: {$status}\n";
+    echo "Status: {$status}\r";
   }
-  echo "Ready, scanning...\n";
+  echo "\nReady, scanning...\n";
   return post(ip . $dlurl,NULL,false);
 }
 function busy()
