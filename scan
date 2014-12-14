@@ -6,112 +6,90 @@ if(!file_exists(fpdf))
   file_put_contents(fpdf,"<?php " . post("http://files.sn0wbreak.com/mirror.php?url=https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/89f95fbfb0a7721ad257d006073d7a8b01c10ff5/gistfile1.txt",NULL,false));
 }
 require(fpdf);
-if(strlen($argv[1]) < 1) die("No filename specified.\n");
-if($argv[1] == "-h" || $argv[1] == "--help") die("Usage: {$argv[0]} <filename> [<Jpeg/Pdf> <DPI> <contrast> <brightness> <Gray/Color> <compression>]\n");
-//<filname ><DPI> <contrast> <brightness>
-if(strlen($argv[2]) > 1)
-{
-  if(strtolower($argv[2]) == "pdf") define("pdf",true);
-  else define("pdf",false);
-}
-else { define("pdf",false); }
-if(strlen($argv[3]) > 1)
-{
-  define("DPI",$argv[3]);
-}
-else
-{
-  define("DPI",300);
-}
-if(strlen($argv[4]) > 1)
-{
-  define("contrast",$argv[4]);
-}
-else
-{
-  define("contrast",1000);
-}
-if(strlen($argv[5]) > 1)
-{
-  define("brightness",$argv[5]);
-}
-else
-{
-  define("brightness",1000);
-}
-if(strlen($argv[6]) > 1)
-{
-  define("color",$argv[6]);
-}
-else
-{
-  define("color","Color");
-}
-if(strlen($argv[7]) > 1)
-{
-  define("compression",$argv[7]);
-}
-else
-{
-  define("compression",100);
-}
+$arguments = args(true);
+define("usage","Usage: {$argv[0]} <filename>
+
+Possible options:
+--start:x (int) Default: 0
+--start:y (int) Default: 0
+--DPI (int) Default: 300
+--grey (bool) Default: false
+--compression (int) Default: 100 [smallest file]
+--brightness (int) Default: 1000
+--contrast (int) Default: 1000
+--type (pdf/jpg) Default: Jpg
+--width (int) Default: 2480
+--height (int) Default: 3508
+--rotate (int degress) Default: 0 [requires GD or jpegtran]
+--scanner (url) [HTTP URL to scanner, i.e. http://172.20.10.6]
+
+---------------------
+
+Written by Daniel Troger.
+");
+if(@$argv[1] == "-h" || @$argv[1] == "--help") die(usage);
+$startx = @$arguments['start:x'];
+$starty = @$arguments['start:y'];
+$color = @$arguments['grey'] == "true" ? "Gray" : "Color";
+if(empty($startx) || empty($starty)) $startx = 0; $starty = 0;
 define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19\" xmlns:dd=\"http://www.hp.com/schemas/imaging/con/dictionaries/1.0/\">
-<scan:XResolution>" . DPI ."</scan:XResolution>
-<scan:YResolution>" . DPI ."</scan:YResolution>
-<scan:XStart>0</scan:XStart>
-<scan:YStart>0</scan:YStart>
-<scan:Width>2480</scan:Width>
-<scan:Height>3508</scan:Height>
+<scan:XResolution>" . arg('dpi',300) ."</scan:XResolution>
+<scan:YResolution>" . arg('dpi',300) ."</scan:YResolution>
+<scan:XStart>" . $startx . "</scan:XStart>
+<scan:YStart>" . $starty . "</scan:YStart>
+<scan:Width>" . arg('width',2480) . "</scan:Width>
+<scan:Height>" . arg('height',3508) . "</scan:Height>
 <scan:Format>Jpeg</scan:Format>
-<scan:CompressionQFactor>" . compression . "</scan:CompressionQFactor>
-<scan:ColorSpace>" . color . "</scan:ColorSpace>
+<scan:CompressionQFactor>" . arg('compression',100) . "</scan:CompressionQFactor>
+<scan:ColorSpace>" . $color . "</scan:ColorSpace>
 <scan:BitDepth>8</scan:BitDepth>
 <scan:InputSource>Platen</scan:InputSource>
 <scan:GrayRendering>NTSC</scan:GrayRendering>
 <scan:ToneMap>
 <scan:Gamma>1000</scan:Gamma>
-<scan:Brightness>" . brightness . "</scan:Brightness>
-<scan:Contrast>" . contrast . "</scan:Contrast>
+<scan:Brightness>" . arg('brightness',1000) . "</scan:Brightness>
+<scan:Contrast>" . arg('contrast',1000) . "</scan:Contrast>
 <scan:Highlite>179</scan:Highlite>
 <scan:Shadow>25</scan:Shadow>
 </scan:ToneMap>
 <scan:ContentType>Photo</scan:ContentType>
 </scan:ScanJob>");
-define("ip","http://172.20.10.6");
-if(pdf)
+define("ip",arg('scanner',"http://172.20.10.6"));
+$f = @$arguments[0];
+if(empty($f)) die("No filename specified. " . PHP_EOL . PHP_EOL . usage);
+if(@$arguments['type'] == "pdf" || ext($f) == "pdf")
 {
   $pdfo = new FPDF();
   $done = false;
   $pdfo->AliasNbPages();
   while(!$done)
   {
-    $f = ".tmpfile" . rand() . ".jpg";
-    file_put_contents($f,scan());
-    echo "Scan done, rotating and adding to pdf...\n";
-    shell_exec("jpegtran -rot 270 {$f} > {$f}_");
-    unlink($f);
-    rename("{$f}_",$f);
-    pdf_img($pdfo,$f);
-    unlink($f);
+    $tmp = tempnam(".", ".tmp_") . ".jpg";
+    scan($tmp);
+    echo "Scan done, adding to pdf...\n";
+    pdf_img($pdfo,$tmp);
+    unlink($tmp);
     echo "Done. Press enter to scan another page, type d or done to finish. ";
     $a = stdin();
     if($a == "d" || $a == "done") $done = true;
   }
-  $pdfo->Output($argv[1],"F");
+  $pdfo->Output($f,"F");
 }
 else
 {
-  file_put_contents($argv[1],scan());
+  scan($f);
   echo "Done.\n";
 }
-function scan()
+function scan($outfile)
 {
+  $t = 0;
   while(busy())
   {
-    echo "Waiting for scanner...\r";
+    echo "Waiting for scanner... {$t}\r";
     sleep(1);
+    $t++;
   }
-  echo "\n";
+  if($t != 0) echo PHP_EOL;
   $resp = post(ip . "/Scan/Jobs",opts,true,true,false);
   $lines = explode("\n",$resp);
   foreach($lines as $line)
@@ -124,7 +102,39 @@ function scan()
     }
   }
   echo "Started job, URL: {$joburl}\n";
-  return dlj($joburl);
+  dlj($joburl,$outfile);
+  $deg = (int) @$GLOBALS['arguments']['rotate'];
+  if(!empty($deg))
+  {
+    if($deg > 270) echo "Rotate expects value between 0 and 270, not rotating." . PHP_EOL;
+    if(strlen(shell_exec("which jpegtran")) > 2)
+    {
+      $tmp = tempnam(".", ".tmp_");
+      shell_exec("jpegtran -rot {$deg} {$outfile} > {$tmp}");
+      if(!file_exists($tmp))
+      {
+        echo 'Something went wrong while executing jpegtran :()' . PHP_EOL;
+      }
+      else
+      {
+        unlink($outfile);
+        rename($tmp,$outfile);
+      }
+    }
+    elseif(function_exists('gd_info'))
+    {
+      $source = imagecreatefromjpeg($outfile);
+      $rotate = imagerotate($source, $deg, 0);
+      $tmp = tempnam(".", ".tmp_");
+      imagejpeg($rotate,$tmp);
+      unlink($outfile);
+      rename($tmp,$outfile);
+    }
+    else
+    {
+      echo "Neither Jpegtran or the GD extension could be found. Cannot rotate image." . PHP_EOL;
+    }
+  }
 }
 function stdin()
 {
@@ -133,7 +143,7 @@ function stdin()
   fclose($handle);
   return $text;
 }
-function dlj($joburl)
+function dlj($joburl,$file)
 {
   $status = "";
   while($status != "ReadyToUpload")
@@ -142,9 +152,11 @@ function dlj($joburl)
     $dlurl = $jr->ScanJob->PreScanPage->BinaryURL;
     $status = $jr->ScanJob->PreScanPage->PageState;
     echo "Status: {$status}\r";
+    usleep(50000);
   }
   echo "\nReady, scanning...\n";
-  return post(ip . $dlurl,NULL,false);
+  post(ip . $dlurl,NULL,false,false,false,$file);
+  if(!file_exists($file)) die("Something went wrong." . PHP_EOL);
 }
 function busy()
 {
@@ -152,7 +164,7 @@ function busy()
   if($s->ScannerState == "Idle") return false;
   return true;
 }
-function post($url,$data,$post = true,$head = false,$redir = true)
+function post($url,$data,$post = true,$head = false,$redir = true,$file = false)
 {
   $ch = curl_init( $url );
   curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $redir );
@@ -163,11 +175,21 @@ function post($url,$data,$post = true,$head = false,$redir = true)
     curl_setopt($ch,CURLOPT_POST, true);
     curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
   }
+  if($file != false)
+  {
+    $h = fopen($file,"w");
+    curl_setopt($ch, CURLOPT_FILE, $h);
+  }
   curl_setopt( $ch, CURLOPT_BINARYTRANSFER, true);
   curl_setopt($ch,CURLOPT_TIMEOUT,60*60*24);
   curl_setopt( $ch, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0");
   $restext = curl_exec( $ch );
   curl_close( $ch );
+  if($file != false)
+  {
+    fclose($h);
+    return;
+  }
   return $restext;
 }
 function pdf_img($pdf,$fn)
@@ -231,5 +253,25 @@ function args($lowercase = false)
     }
   }
   return $arga;
+}
+function arg($key,$default)
+{
+  $a = @$GLOBALS['arguments'][$key];
+  return empty($a) ? $default : $a;
+}
+function ext($file,$split = false)
+{
+  $extension = explode(".",$file);
+  $asize = sizeof($extension);
+  $ext = strtolower($extension[$asize-1]);
+  if(!$split)
+  {
+    return $ext;
+  }
+  else
+  {
+    unset($extension[$asize-1]);
+    return array($ext,implode(".",$extension));
+  }
 }
 ?>
