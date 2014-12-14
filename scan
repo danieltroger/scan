@@ -68,7 +68,7 @@ if(@$arguments['type'] == "pdf" || ext($f) == "pdf")
     scan($tmp);
     echo "Scan done, adding to pdf..." . PHP_EOL;
     pdf_img($pdfo,$tmp);
-  //  unlink($tmp);
+    unlink($tmp);
     if(file_exists($tmp)) echo "WUUT?\n";
     echo "Done. Press enter to scan another page, type d or done to finish. ";
     $a = stdin();
@@ -108,12 +108,10 @@ function scan($outfile)
   if(!empty($deg))
   {
     if($deg > 270) echo "Rotate expects value between 0 and 270, not rotating." . PHP_EOL;
-    if(strlen(shell_exec("which jpegtran")) > 2)
+    if(strlen(shell_exec("which jpegtran")) > 2 && ($deg == 270 || $deg == 180 || $deg == 90))
     {
-      $tmp = basename(tempnam(".", ".tmp_"));
-      echo shell_exec("jpegtran -rot {$deg} {$outfile} > {$tmp}");
-      echo "jpegtran -rot {$deg} {$outfile} > {$tmp}\n";
-      exit;
+      $tmp = tempnam(".", ".tmp_");
+      shell_exec("jpegtran -rot {$deg} {$outfile} > {$tmp}");
       if(!file_exists($tmp))
       {
         echo 'Something went wrong while executing jpegtran :()' . PHP_EOL;
