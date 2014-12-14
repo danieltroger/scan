@@ -77,7 +77,7 @@ define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/
 </scan:ToneMap>
 <scan:ContentType>Photo</scan:ContentType>
 </scan:ScanJob>");
-define("ip","http://192.168.178.22");
+define("ip","http://172.20.10.6");
 if(pdf)
 {
   $pdfo = new FPDF();
