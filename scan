@@ -28,15 +28,12 @@ Possible options:
 Written by Daniel Troger.
 ");
 if(@$argv[1] == "-h" || @$argv[1] == "--help") die(usage);
-$startx = @$arguments['start:x'];
-$starty = @$arguments['start:y'];
 $color = @$arguments['grey'] == "true" ? "Gray" : "Color";
-if(empty($startx) || empty($starty)) $startx = 0; $starty = 0;
 define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19\" xmlns:dd=\"http://www.hp.com/schemas/imaging/con/dictionaries/1.0/\">
 <scan:XResolution>" . arg('dpi',300) ."</scan:XResolution>
 <scan:YResolution>" . arg('dpi',300) ."</scan:YResolution>
-<scan:XStart>" . $startx . "</scan:XStart>
-<scan:YStart>" . $starty . "</scan:YStart>
+<scan:XStart>" . arg('start:x',0) . "</scan:XStart>
+<scan:YStart>" . arg('start:y',0) . "</scan:YStart>
 <scan:Width>" . arg('width',2480) . "</scan:Width>
 <scan:Height>" . arg('height',3508) . "</scan:Height>
 <scan:Format>Jpeg</scan:Format>
@@ -69,7 +66,6 @@ if(@$arguments['type'] == "pdf" || ext($f) == "pdf")
     echo "Scan done, adding to pdf..." . PHP_EOL;
     pdf_img($pdfo,$tmp);
     unlink($tmp);
-    if(file_exists($tmp)) echo "WUUT?\n";
     echo "Done. Press enter to scan another page, type d or done to finish. ";
     $a = stdin();
     if($a == "d" || $a == "done") $done = true;
@@ -83,6 +79,11 @@ else
 }
 function scan($outfile)
 {
+  if(file_exists($outfile))
+  {
+    echo "File {$outfile} already exists, overwrite? [y,n]: ";
+    if(stdin() != "y") die("Abort." . PHP_EOL);
+  }
   $t = 0;
   while(busy())
   {
@@ -102,6 +103,7 @@ function scan($outfile)
       $joburl = substr(implode(":",$splt),1);
     }
   }
+  if(empty($joburl)) die("Something went wrong." . PHP_EOL);
   echo "Started job, URL: {$joburl}\n";
   dlj($joburl,$outfile);
   $deg = (int) @$GLOBALS['arguments']['rotate'];
