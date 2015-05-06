@@ -1,6 +1,15 @@
 #!/usr/bin/php -d memory_limit=10G
 <?php
-define("fpdf",getenv("HOME") . DIRECTORY_SEPARATOR . ".fpdf");
+  // getenv('HOME') isn't set on windows and generates a Notice.
+  $home = getenv('HOME');
+  if (empty($home)) {
+    if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
+      // home on windows
+      $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+    }
+  }
+  return empty($home) ? NULL : $home;
+define("fpdf",$home . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
 {
   file_put_contents(fpdf,"<?php " . post("http://files.sn0wbreak.com/mirror.php?url=https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/89f95fbfb0a7721ad257d006073d7a8b01c10ff5/gistfile1.txt",NULL,false));
@@ -142,7 +151,7 @@ function scan($outfile)
 function stdin()
 {
   $handle = fopen ("php://stdin","r");
-  $text = strtolower(str_replace("\n","",fgets($handle)));
+  $text = strtolower(str_replace(PHP_EOL,"",fgets($handle)));
   fclose($handle);
   return $text;
 }
