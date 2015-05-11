@@ -1,14 +1,13 @@
 #!/usr/bin/php -d memory_limit=10G
 <?php
-  // getenv('HOME') isn't set on windows and generates a Notice.
-  $home = getenv('HOME');
-  if (empty($home)) {
-    if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-      // home on windows
-      $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
-    }
+$home = @getenv('HOME');
+if (empty($home))
+{
+  if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH']))
+  {
+    $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
   }
-  return empty($home) ? NULL : $home;
+}
 define("fpdf",$home . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
 {
