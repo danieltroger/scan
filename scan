@@ -30,7 +30,7 @@ Possible options:
 --width (int) Default: 2480
 --height (int) Default: 3508
 --rotate (int degress) Default: 0 [requires GD or jpegtran]
---scanner (url) [HTTP URL to scanner, i.e. http://172.20.10.6]
+--scanner (url) [HTTP URL to scanner, i.e. http://hpe92b26.fritz.box]
 
 ---------------------
 
@@ -60,7 +60,7 @@ define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/
 </scan:ToneMap>
 <scan:ContentType>Photo</scan:ContentType>
 </scan:ScanJob>");
-define("ip",arg('scanner',"http://172.20.10.6"));
+define("ip",arg('scanner',"http://hpe92b26.fritz.box"));
 $f = @$arguments[0];
 if(empty($f)) die("No filename specified. " . PHP_EOL . PHP_EOL . usage);
 if(@$arguments['type'] == "pdf" || ext($f) == "pdf")
@@ -84,7 +84,7 @@ if(@$arguments['type'] == "pdf" || ext($f) == "pdf")
 else
 {
   scan($f);
-  echo "Done.\n";
+  echo "Done." . PHP_EOL;
 }
 function scan($outfile)
 {
@@ -115,7 +115,7 @@ function scan($outfile)
   if(empty($joburl)) die("Something went wrong." . PHP_EOL);
   $lc = substr($joburl,-1);
   if($lc == "\n" || $lc == "\r") $joburl = substr($joburl,0,-1);
-  echo "Started job, URL: {$joburl}\n";
+  echo "Started job, URL: {$joburl}" . PHP_EOL;
   dlj($joburl,$outfile);
   $deg = (int) @$GLOBALS['arguments']['rotate'];
   if(!empty($deg))
@@ -176,7 +176,7 @@ function dlj($joburl,$file)
     }
     usleep(50000);
   }
-  echo "\nReady, scanning...\n";
+  echo PHP_EOL . "Ready, scanning..." . PHP_EOL;
   post(ip . $dlurl,NULL,false,false,false,$file);
   if(!file_exists($file)) die("Something went wrong." . PHP_EOL);
 }
