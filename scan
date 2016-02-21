@@ -11,7 +11,7 @@ if (empty($home))
 define("fpdf",$home . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
 {
-  file_put_contents(fpdf,"<?php " . post("https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/46b82e467f78a4591037a599b12be06d215770cd/gistfile1.txt",NULL,false));
+  file_put_contents(fpdf,post("https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/46b82e467f78a4591037a599b12be06d215770cd/gistfile1.txt",NULL,false));
 }
 require(fpdf);
 $arguments = args(true);
