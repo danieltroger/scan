@@ -11,7 +11,7 @@ if (empty($home))
 define("fpdf",$home . DIRECTORY_SEPARATOR . ".fpdf");
 if(!file_exists(fpdf))
 {
-  file_put_contents(fpdf,"<?php " . post("http://files.sn0wbreak.com/mirror.php?url=https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/89f95fbfb0a7721ad257d006073d7a8b01c10ff5/gistfile1.txt",NULL,false));
+  file_put_contents(fpdf,"<?php " . post("https://gist.githubusercontent.com/danieltroger/b89ecca95f2e058e6120/raw/46b82e467f78a4591037a599b12be06d215770cd/gistfile1.txt",NULL,false));
 }
 require(fpdf);
 $arguments = args(true);
@@ -24,12 +24,15 @@ Possible options:
 --grey (bool) Default: false
 --compression (int) Default: 100 [smallest file]
 --brightness (int) Default: 1000
---contrast (int) Default: 1000
+--contrast (int) Default: 1000 [lower value should mean higher contrast]
 --type (pdf/jpg) Default: Jpg
 --width (int) Default: 2480
 --height (int) Default: 3508
 --rotate (int degress) Default: 0 [requires GD or jpegtran]
 --scanner (url) [HTTP URL to scanner, i.e. http://hpe92b26.fritz.box]
+--highlite (int) Default: 179 [Dunno how the printer reacts to this]
+--shadow (int) Default: 25 [Dunno either, like ^]
+--gamma (int) Default: 1000 [Also untested, as ^]
 
 ---------------------
 
@@ -51,11 +54,11 @@ define("opts","<scan:ScanJob xmlns:scan=\"http://www.hp.com/schemas/imaging/con/
 <scan:InputSource>Platen</scan:InputSource>
 <scan:GrayRendering>NTSC</scan:GrayRendering>
 <scan:ToneMap>
-<scan:Gamma>1000</scan:Gamma>
+<scan:Gamma>" . arg('gamma',1000) . "</scan:Gamma>
 <scan:Brightness>" . arg('brightness',1000) . "</scan:Brightness>
 <scan:Contrast>" . arg('contrast',1000) . "</scan:Contrast>
-<scan:Highlite>179</scan:Highlite>
-<scan:Shadow>25</scan:Shadow>
+<scan:Highlite>" . arg('highlite',170) . "</scan:Highlite>
+<scan:Shadow>" . arg('shadow',25) . "</scan:Shadow>
 </scan:ToneMap>
 <scan:ContentType>Photo</scan:ContentType>
 </scan:ScanJob>");
